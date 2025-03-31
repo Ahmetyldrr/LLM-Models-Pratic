@@ -101,3 +101,111 @@ Her deneyim sonunda “öğrendiklerim” şeklinde bir özet yaz.
 
 **Hazırlayan:** Sadece senin için, sistemli ve sade bir öğrenme rehberi.
 
+
+# 🔧 NLP Projesi Yol Haritası – Kod Temelli Başlangıç Rehberi
+
+Bu rehber, PDF'ten metin çıkarma, bu metinle soru-cevap sistemi kurma ve basit bir arayüzle yayına alma sürecinin temel kodlarını içerir.
+
+---
+
+## 📄 Aşama 1: PDF'ten Metin Çıkarma
+
+```python
+# pdfplumber ile PDF'ten metin çekme
+import pdfplumber
+
+def extract_text_from_pdf(pdf_path):
+    full_text = ""
+    with pdfplumber.open(pdf_path) as pdf:
+        for page in pdf.pages:
+            full_text += page.extract_text() + "\n"
+    return full_text
+
+# Kullanım
+text = extract_text_from_pdf("ornek.pdf")
+print(text[:500])  # ilk 500 karakteri göster
+```
+
+Alternatif olarak:
+```python
+import fitz  # PyMuPDF
+
+def extract_with_fitz(path):
+    doc = fitz.open(path)
+    return "\n".join([page.get_text() for page in doc])
+
+text = extract_with_fitz("ornek.pdf")
+```
+
+---
+
+## ❓ Aşama 2: Soru-Cevap (QA) Modeli Kullanımı
+
+```python
+from transformers import pipeline
+
+qa = pipeline("question-answering", model="deepset/roberta-base-squad2")
+
+context = text  # PDF'ten aldığımız metin
+question = "Bu belge neyle ilgili?"
+
+result = qa(question=question, context=context)
+print("Cevap:", result["answer"])
+```
+
+---
+
+## 🌐 Aşama 3: Basit Arayüz (Gradio ile)
+
+```python
+import gradio as gr
+
+def answer_question(question, context):
+    result = qa(question=question, context=context)
+    return result["answer"]
+
+demo = gr.Interface(
+    fn=answer_question,
+    inputs=["text", "text"],
+    outputs="text",
+    title="PDF QA Sistemi",
+    description="PDF içeriğine dayalı soru-cevap sistemi"
+)
+
+demo.launch()
+```
+
+---
+
+## 🚀 Ekstra: API ile Yayınlama (Flask Örneği)
+
+```python
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+@app.route("/qa", methods=["POST"])
+def qa_api():
+    data = request.json
+    question = data["question"]
+    context = data["context"]
+    result = qa(question=question, context=context)
+    return jsonify({"answer": result["answer"]})
+
+# Çalıştır
+# flask --app app.py run
+```
+
+---
+
+## 🧠 Notlar
+
+- `pdfplumber` → Metin bazlı PDF'ler için çok başarılıdır.
+- `fitz` (`PyMuPDF`) → Görsel destekli belgeler için daha sağlam sonuç verir.
+- `deepset/roberta-base-squad2` → İngilizce QA için çok güçlü bir modeldir.
+- Türkçe QA için: `savasy/bert-base-turkish-squad` modelini deneyebilirsin.
+- Arayüz için `Gradio`, servis için `Flask` başlangıç için yeterlidir.
+
+---
+
+**Hazırlayan:** Projeye başlaman ve korkmadan ilerlemen için mini bir destek rehberi.
